@@ -7,6 +7,15 @@ from .serializer import ItemSerializer
 def item_list(request):
     if request.method == 'GET':
         items = Item.objects.all()
+        type = request.GET.get('type')
+        category = request.GET.get('category')
+        status = request.GET.get('status')
+        if type:
+            items = items.filter(type = type)
+        if category: 
+            items = items.filter(category = category)
+        if status:
+            status = items.filter(status = status)
         serializer = ItemSerializer(items , many = True)
         return Response(serializer.data)
     elif request.method =='POST':
