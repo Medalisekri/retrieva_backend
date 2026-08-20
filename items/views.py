@@ -25,6 +25,8 @@ def item_detail(request , pk):
     if request.method == 'GET':
         serializer = ItemSerializer(item)
         return Response(serializer.data)
+    if item.user != request.user:
+        return Response(status=403)
     elif request.method =='PATCH':
         serializer = ItemSerializer(item , data = request.data , partial = True)
         if serializer.is_valid():
