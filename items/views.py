@@ -45,4 +45,14 @@ def item_detail(request , pk):
     elif request.method == 'DELETE':
         item.delete()
         return Response(status = 204)
+@api_view(['PATCH'])
+def report_item(request , pk):
+    try:
+        item = Item.objects.get(pk=pk)
+    except Item.DoesNotExist:
+        return Response(status = 404)
+    item.is_reported = True
+    item.save()
+    return Response({"message" : "Item reported"}) 
+  
 
