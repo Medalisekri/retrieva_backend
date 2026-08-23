@@ -2,11 +2,14 @@ from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from .models import Item
-from .serializer import ItemSerializer
+from .serializer import ItemListSerializer
+from django.utils import timezone
+from .serializer import ItemDetailSerializer
 @api_view(['GET' , 'POST'])
 def item_list(request):
     if request.method == 'GET':
         items = Item.objects.all()
+        items = Item.objects.filter(expires_at__gte=timezone.now().date()) | Item.objects.filter(expires_at__isnull=True)
         type = request.GET.get('type')
         category = request.GET.get('category')
         status = request.GET.get('status')
@@ -16,10 +19,10 @@ def item_list(request):
             items = items.filter(category = category)
         if status:
             status = items.filter(status = status)
-        serializer = ItemSerializer(items , many = True)
+        serializer = ItemListSerializer(items , many = True)
         return Response(serializer.data)
     elif request.method =='POST':
-        serializer = ItemSerializer(data = request.data)
+        serializer = ItemListSerializer(data = request.data)
         if serializer.is_valid():
             serializer.save(user = request.user)
             return Response(serializer.data ) 
@@ -32,12 +35,14 @@ def item_detail(request , pk):
     except Item.DoesNotExist:
         return Response(status = 404)
     if request.method == 'GET':
-        serializer = ItemSerializer(item)
+        if item.expires_at and item.expires_at < timezone.now().date():
+            return Response(status=404)
+        serializer = ItemDetailSerializer(item)
         return Response(serializer.data)
     if item.user != request.user:
         return Response(status=403)
     elif request.method =='PATCH':
-        serializer = ItemSerializer(item , data = request.data , partial = True)
+        serializer = ItemDetailSerializer(item , data = request.data , partial = True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data ) 
