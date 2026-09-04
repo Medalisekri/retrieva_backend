@@ -3,6 +3,8 @@ from rest_framework.response import Response
 from .serializer import ProfileSerializer
 @api_view(['GET', 'PATCH'])
 def profile(request):
+    print("USER:", request.user)
+    print("AUTH:", request.auth)
     profile = request.user.profile
     if request.method == 'GET':
         return Response(ProfileSerializer(profile).data)

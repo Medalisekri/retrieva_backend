@@ -1,6 +1,7 @@
-from django.shortcuts import render
+
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from .models import Item
 from .serializer import ItemListSerializer
 from django.utils import timezone
@@ -18,8 +19,8 @@ def item_list(request):
         if category: 
             items = items.filter(category = category)
         if status:
-            status = items.filter(status = status)
-        serializer = ItemListSerializer(items , many = True)
+            items = items.filter(status = status)
+        serializer = ItemListSerializer(items , many = True ,context={'request': request})
         return Response(serializer.data)
     elif request.method =='POST':
         serializer = ItemListSerializer(data = request.data)
@@ -35,9 +36,10 @@ def item_detail(request , pk):
     except Item.DoesNotExist:
         return Response(status = 404)
     if request.method == 'GET':
+
         if item.expires_at and item.expires_at < timezone.now().date():
             return Response(status=404)
-        serializer = ItemDetailSerializer(item)
+        serializer = ItemDetailSerializer(item , context={'request': request},)
         return Response(serializer.data)
     if item.user != request.user:
         return Response(status=403)
@@ -59,5 +61,18 @@ def report_item(request , pk):
     item.is_reported = True
     item.save()
     return Response({"message" : "Item reported"}) 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def my_items(request):
+    items = Item.objects.filter(user=request.user).order_by('-created_at')
+    active = request.GET.get('status')
+    resolved = request.GET.get('status')
+ 
+    if active:
+           items = items.filter(status = 'active')
+    if resolved: 
+           items = items.filter(status = 'resolved')
+    serializer = ItemListSerializer(items, many=True )
+    return Response(serializer.data)
   
 
