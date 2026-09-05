@@ -42,7 +42,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'accounts.apps.AccountsConfig',
-    'items'
+    'items',
+    'chats'
 ]
 REST_FRAMEWORK = {
       'DEFAULT_AUTHENTICATION_CLASSES': [
