@@ -16,7 +16,7 @@ def chat_conv(request):
         return Response(status=403)
     if request.method == 'GET': 
        
-        serializer = ConversationSerializer(conversation , many = True )
+        serializer = ConversationSerializer(conversation , many = True  )
         return Response(serializer.data)
     elif request.method =='POST':
         serializer = ConversationSerializer(data = request.data)
@@ -28,6 +28,23 @@ def chat_conv(request):
     
 def _check_partc(conversation , user):
     return user in (conversation.participant1 , conversation.particiapnt2)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def chat_conv_detail(request, pk):
+    try:
+        conversation = Conversation.objects.get(pk=pk)
+    except Conversation.DoesNotExist:
+        return Response(status=404)
+
+    if request.user not in (conversation.participant1, conversation.participant2):
+        return Response(status=403)
+
+    serializer = ConversationSerializer(
+        conversation,
+        context={'request': request}  
+    )
+    return Response(serializer.data)
 
 
 @api_view(['GET' , 'POST' , 'DELETE'])
