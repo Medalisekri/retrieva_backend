@@ -13,7 +13,13 @@ class ConversationSerializer(serializers.ModelSerializer):
             return obj.blocked_by.filter(id=request.user.id).exists()
         return False
 class MessageSerializer(serializers.ModelSerializer):
+    is_mine = serializers.SerializerMethodField()
     class Meta:
         model = Message
         fields = '__all__'
+    def get_is_mine(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.sender == request.user
+        return False
         

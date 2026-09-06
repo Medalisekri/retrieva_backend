@@ -60,7 +60,7 @@ def chat_msg(request , pk):
         return Response('Conversation is blocked')
     if request.method == 'GET':
         messages = Message.objects.get()
-        serializer = MessageSerializer(messages )
+        serializer = MessageSerializer(messages , context = {'request':request} )
         return Response(serializer.data)
     elif request.method =='POST':
         serializer = MessageSerializer(messages , data = request.data)
