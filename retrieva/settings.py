@@ -17,18 +17,19 @@ import os
 load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+ONESIGNAL_APP_ID = os.getenv('ONESIGNAL_APP_ID')
+ONESIGNAL_REST_API_KEY = os.getenv('ONESIGNAL_REST_API_KEY')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-z!jr9zl^i7@rvl#c6m-hsp1w=x7#ec+_q4iewnd3#fk34f&+q%'
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['10.0.2.2' , '127.0.0.1']
+ALLOWED_HOSTS = ['10.0.2.2' , '127.0.0.1' , '192.168.1.103']
 
 
 # Application definition

@@ -6,6 +6,7 @@ from .models import Item
 from .serializer import ItemListSerializer
 from django.utils import timezone
 from .serializer import ItemDetailSerializer
+from .matching import find_matches
 @api_view(['GET' , 'POST'])
 def item_list(request):
     if request.method == 'GET':
@@ -26,6 +27,9 @@ def item_list(request):
         serializer = ItemListSerializer(data = request.data)
         if serializer.is_valid():
             serializer.save(user = request.user)
+            matches = find_matches(ItemListSerializer)
+            if matches:
+                send_match_notifications(items, matches)
             return Response(serializer.data ) 
         return Response(serializer.errors , status=400)
 
