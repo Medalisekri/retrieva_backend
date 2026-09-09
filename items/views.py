@@ -6,7 +6,8 @@ from .models import Item
 from .serializer import ItemListSerializer
 from django.utils import timezone
 from .serializer import ItemDetailSerializer
-from .matching import find_matches
+from .matching import find_matches 
+from .notifications import send_match_notifications
 @api_view(['GET' , 'POST'])
 def item_list(request):
     if request.method == 'GET':
@@ -26,12 +27,18 @@ def item_list(request):
     elif request.method =='POST':
         serializer = ItemListSerializer(data = request.data)
         if serializer.is_valid():
-            serializer.save(user = request.user)
-            matches = find_matches(ItemListSerializer)
-            if matches:
-                send_match_notifications(items, matches)
-            return Response(serializer.data ) 
-        return Response(serializer.errors , status=400)
+    # 1. Save the item to the database (this returns the Item instance)
+            item = serializer.save(user=request.user)  
+
+    # 2. Pass that 'item' instance into the matching function
+            matches = find_matches(item)  
+    
+        if matches:
+            send_match_notifications(item, matches)
+
+        return Response(ItemListSerializer(item).data, status=201)
+            
+         
 
 @api_view(['GET' , 'PATCH' , 'DELETE'])
 def item_detail(request , pk):
@@ -55,7 +62,7 @@ def item_detail(request , pk):
         return Response(serializer.errors , status=400)
     elif request.method == 'DELETE':
         item.delete()
-        return Response(status = 204)
+        return Response(status = 201)
 @api_view(['PATCH'])
 def report_item(request , pk):
     try:

@@ -12,11 +12,11 @@ class Conversation(models.Model):
    
 
 class Message(models.Model):
-    conversation = models.ForeignKey(Conversation , on_delete=models.CASCADE ,related_name='conversation')
-    text = models.CharField(max_length=400)
-    sender = models.ForeignKey(User , on_delete=models.CASCADE ,related_name='message_sender')
+    conversation = models.ForeignKey(Conversation , on_delete=models.CASCADE ,related_name='messages')
+    text = models.CharField(max_length=400 , blank= True)
+    sender = models.ForeignKey(User , on_delete=models.CASCADE ,related_name='sender')
     is_deleted = models.BooleanField(default=False)
-    img_url = models.CharField(max_length=200)
+    img_url = models.CharField(max_length=200 , blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
 # Create your models here.

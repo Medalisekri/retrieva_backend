@@ -8,26 +8,44 @@ from .models import Message
 from .serializer import MessageSerializer
 from .serializer import ConversationSerializer
 from django.db.models import Q
-@api_view(['GET' , 'POST'])
+@api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def chat_conv(request):
-    conversation = Conversation.objects.filter(Q(participant1 = request.user) | Q(participant2 = request.user))
-    if request.user not in(Conversation.participant1 , Conversation.participant2):
-        return Response(status=403)
-    if request.method == 'GET': 
-       
-        serializer = ConversationSerializer(conversation , many = True  )
+    if request.method == 'GET':
+        conversations = Conversation.objects.filter(
+            Q(participant1=request.user) | Q(participant2=request.user)
+        )
+        serializer = ConversationSerializer(conversations, many=True,
+                                            context={'request': request})
         return Response(serializer.data)
-    elif request.method =='POST':
-        serializer = ConversationSerializer(data = request.data)
-        if serializer.is_valid():
-            serializer.save(participant1 = request.user ) 
-            return Response(serializer.data ) 
-        return Response(serializer.errors , status=400)
 
+    elif request.method == 'POST':
+        item_id = request.data.get('item')
+        other_user_id = request.data.get('participant2')
+
+        # ✅ Check if conversation already exists (either direction)
+        existing = Conversation.objects.filter(
+            Q(item_id=item_id) &
+            (
+                (Q(participant1=request.user) & Q(participant2_id=other_user_id)) |
+                (Q(participant1_id=other_user_id) & Q(participant2=request.user))
+            )
+        ).first()
+
+        if existing:
+            serializer = ConversationSerializer(existing, context={'request': request})
+            return Response(serializer.data, status=200)
+
+        # ✅ Create new only if none exists
+        serializer = ConversationSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(participant1=request.user)
+            return Response(serializer.data, status=201)
+        print("SERIALIZER ERRORS:", serializer.errors)
+        return Response(serializer.errors, status=400)
     
 def _check_partc(conversation , user):
-    return user in (conversation.participant1 , conversation.particiapnt2)
+    return user in (conversation.participant1 , conversation.participant2)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -47,28 +65,34 @@ def chat_conv_detail(request, pk):
     return Response(serializer.data)
 
 
-@api_view(['GET' , 'POST' , 'DELETE'])
+@api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
-def chat_msg(request , pk):
+def chat_msg(request, pk):
     try:
-        conversation = Conversation.objects.get(pk=pk)
-    except Message.DoesNotExist:
-        return Response(status = 404)
-    if not _check_partc(conversation , request.user):
-        return Response(status = 403)
-    if conversation.blocked_by.exists():
-        return Response('Conversation is blocked')
-    if request.method == 'GET':
-        messages = Message.objects.get()
-        serializer = MessageSerializer(messages , context = {'request':request} )
-        return Response(serializer.data)
-    elif request.method =='POST':
-        serializer = MessageSerializer(messages , data = request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data ) 
-        return Response(serializer.errors , status=400)
+        conversation = Conversation.objects.get(pk=pk)  # ← Conversation, not Message
+    except Conversation.DoesNotExist:
+        return Response(status=404)
 
+    if not _check_partc(conversation, request.user):
+        return Response(status=403)
+
+    # Only block if THIS user is blocked, not just anyone
+    if conversation.blocked_by.filter(id=request.user.id).exists():
+        return Response({'detail': 'You blocked this conversation.'}, status=403)
+
+    if request.method == 'GET':
+        messages = Message.objects.filter(conversation=conversation).order_by('created_at')
+        serializer = MessageSerializer(messages, many=True,
+                                       context={'request': request})
+        return Response(serializer.data)
+
+    elif request.method == 'POST':
+        serializer = MessageSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(conversation=conversation, sender=request.user)
+            return Response(serializer.data, status=201)
+        print("SERIALIZER ERRORS:", serializer.errors)
+        return Response(serializer.errors, status=400)
     
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
@@ -83,16 +107,23 @@ def delete_msg(request , pk):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def block_unblock(request , pk):
-    if request.user not in(Conversation.participant1 , Conversation.participant2):
-        return Response(status=403)
+def block_unblock(request, pk):
     try:
-        conversation = Conversation.objects.get(pk=pk)
-    except Message.DoesNotExist:
-        return Response(status = 404)
-    conversation.blocked_by = request.user
-    conversation.save()
-    return Response('Conversation is blocked')
+        conversation = Conversation.objects.get(pk=pk)  # ← fetch FIRST
+    except Conversation.DoesNotExist:
+        return Response(status=404)
+
+    # ✅ Check against the INSTANCE, not the class
+    if request.user not in (conversation.participant1, conversation.participant2):
+        return Response(status=403)
+
+    # ✅ blocked_by is ManyToMany — use .add() / .remove()
+    if conversation.blocked_by.filter(id=request.user.id).exists():
+        conversation.blocked_by.remove(request.user)  # unblock
+        return Response({'detail': 'Unblocked'})
+    else:
+        conversation.blocked_by.add(request.user)     # block
+        return Response({'detail': 'Blocked'})
   
 
 
