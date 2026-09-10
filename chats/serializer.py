@@ -4,8 +4,9 @@ from .models import Message
 
 class ConversationSerializer(serializers.ModelSerializer):
     item_name = serializers.CharField(source='item.name', read_only=True)
-    participant1_username = serializers.CharField(source='participant1.username', read_only=True)
-    participant2_username = serializers.CharField(source='participant2.username', read_only=True)
+    participant1_username = serializers.SerializerMethodField()
+    participant2_username = serializers.SerializerMethodField()
+
     last_message = serializers.SerializerMethodField()
     last_message_time = serializers.SerializerMethodField()
     is_blocked = serializers.SerializerMethodField()
@@ -14,28 +15,20 @@ class ConversationSerializer(serializers.ModelSerializer):
         model = Conversation
         fields  = '__all__'
         read_only_fields = ['participant1']
-    def _get_display_name(self, user):
-        # Try profile full_name first, fallback to truncated username
+    def get_participant1_username(self, obj):
+        return self._display_name(obj.participant1)
+
+    def get_participant2_username(self, obj):
+        return self._display_name(obj.participant2)
+
+    def _display_name(self, user):
         try:
             name = user.profile.full_name
             if name:
                 return name
         except Exception:
             pass
-        return f"User {user.username[:8]}"  # Show partial UID as fallback
-
-    def get_participant1_username(self, obj):
-        return self._get_display_name(obj.participant1)
-
-    def get_participant2_username(self, obj):
-        return self._get_display_name(obj.participant2)
-    def _display_name(self, user):
-        try:
-            if user.profile.full_name:
-                return user.profile.full_name
-        except Exception:
-            pass
-        return 'User'
+        return f"User {user.username[:8]}"
     def get_is_blocked(self, obj):
         request = self.context.get('request')
         if request and request.user.is_authenticated:

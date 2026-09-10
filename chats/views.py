@@ -8,6 +8,7 @@ from .models import Message
 from .serializer import MessageSerializer
 from .serializer import ConversationSerializer
 from django.db.models import Q
+from items.notifications import send_push
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def chat_conv(request):
@@ -89,10 +90,34 @@ def chat_msg(request, pk):
     elif request.method == 'POST':
         serializer = MessageSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(conversation=conversation, sender=request.user)
-            return Response(serializer.data, status=201)
-        print("SERIALIZER ERRORS:", serializer.errors)
-        return Response(serializer.errors, status=400)
+             message = serializer.save(conversation=conversation, sender=request.user)
+
+        # ✅ Determine the recipient (the OTHER participant)
+        if conversation.participant1 == request.user:
+            recipient = conversation.participant2
+        else:
+            recipient = conversation.participant1
+
+        # ✅ Send push to the recipient's Firebase UID (username = Firebase UID)
+        if recipient != request.user:
+            sender_name = getattr(request.user.profile, 'full_name', '') or 'Someone'
+            preview = message.text[:80] if message.text else '📷 Sent an image'
+
+            send_push(
+                external_ids=[recipient.username],
+                title=f"💬 {sender_name}",
+                body=preview,
+                data={
+                    "type": "chat_message",
+                    "conversation_id": conversation.id,
+                    "item_name": conversation.item.name,
+                },
+            )
+
+        return Response(serializer.data, status=201)
+
+    print("SERIALIZER ERRORS:", serializer.errors)
+    return Response(serializer.errors, status=400)
     
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
