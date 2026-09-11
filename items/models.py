@@ -1,6 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import User
-from datetime import date
+from datetime import date , timezone , timedelta
+
+def get_expiry_date():
+  return timezone.now() + timedelta(days=60)
 class Item(models.Model):
     type = models.CharField(max_length=10)
     category = models.CharField(max_length=50)
@@ -13,8 +16,9 @@ class Item(models.Model):
     incident_date = models.DateField(max_length=50, default=date.today)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    expires_at = models.DateField(null=True , blank=True)
+    expires_at = models.DateField(null=True , blank=True , default=get_expiry_date)
     is_reported = models.BooleanField(default=False)
     user = models.ForeignKey(User , on_delete=models.CASCADE)
+
 
 

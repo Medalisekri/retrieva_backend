@@ -9,7 +9,7 @@ class ItemListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Item
         fields = '__all__' 
-        read_only_fields = ['user' , 'created_at' ]
+        read_only_fields = ['user' , 'created_at' , 'expires_at' ]
     def get_poster_name(self, obj):
             profile = getattr(obj.user, 'profile', None)
             if profile and profile.full_name:
