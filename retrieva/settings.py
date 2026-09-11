@@ -19,6 +19,9 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 ONESIGNAL_APP_ID = os.getenv('ONESIGNAL_APP_ID')
 ONESIGNAL_REST_API_KEY = os.getenv('ONESIGNAL_REST_API_KEY')
+EMAILJS_SERVICE_ID = os.getenv('EMAILJS_SERVICE_ID')
+EMAILJS_TEMPLATE_ID = os.getenv('EMAILJS_TEMPLATE_ID')
+EMAILJS_PUBLIC_KEY = os.getenv('EMAILJS_PUBLIC_KEY')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
