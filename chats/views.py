@@ -24,7 +24,7 @@ def chat_conv(request):
         item_id = request.data.get('item')
         other_user_id = request.data.get('participant2')
 
-        # ✅ Check if conversation already exists (either direction)
+       
         existing = Conversation.objects.filter(
             Q(item_id=item_id) &
             (
@@ -37,12 +37,12 @@ def chat_conv(request):
             serializer = ConversationSerializer(existing, context={'request': request})
             return Response(serializer.data, status=200)
 
-        # ✅ Create new only if none exists
+      
         serializer = ConversationSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(participant1=request.user)
             return Response(serializer.data, status=201)
-        print("SERIALIZER ERRORS:", serializer.errors)
+       
         return Response(serializer.errors, status=400)
     
 def _check_partc(conversation , user):
@@ -92,20 +92,18 @@ def chat_msg(request, pk):
         if serializer.is_valid():
              message = serializer.save(conversation=conversation, sender=request.user)
 
-        # ✅ Determine the recipient (the OTHER participant)
         if conversation.participant1 == request.user:
             recipient = conversation.participant2
         else:
             recipient = conversation.participant1
 
-        # ✅ Send push to the recipient's Firebase UID (username = Firebase UID)
         if recipient != request.user:
             sender_name = getattr(request.user.profile, 'full_name', '') or 'Someone'
-            preview = message.text[:80] if message.text else '📷 Sent an image'
+            preview = message.text[:80] if message.text else 'Sent an image'
 
             send_push(
                 external_ids=[recipient.username],
-                title=f"💬 {sender_name}",
+                title=f"New message from {sender_name}",
                 body=preview,
                 data={
                     "type": "chat_message",
@@ -116,7 +114,7 @@ def chat_msg(request, pk):
 
         return Response(serializer.data, status=201)
 
-    print("SERIALIZER ERRORS:", serializer.errors)
+
     return Response(serializer.errors, status=400)
     
 @api_view(['DELETE'])
@@ -138,18 +136,14 @@ def block_unblock(request, pk):
     except Conversation.DoesNotExist:
         return Response(status=404)
 
-    # ✅ Check against the INSTANCE, not the class
+   
     if request.user not in (conversation.participant1, conversation.participant2):
         return Response(status=403)
 
-    # ✅ blocked_by is ManyToMany — use .add() / .remove()
+   
     if conversation.blocked_by.filter(id=request.user.id).exists():
         conversation.blocked_by.remove(request.user)  # unblock
         return Response({'detail': 'Unblocked'})
     else:
         conversation.blocked_by.add(request.user)     # block
         return Response({'detail': 'Blocked'})
-  
-
-
-# Create your views here.

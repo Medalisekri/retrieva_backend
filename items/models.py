@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
-from datetime import date , timezone , timedelta
+from datetime import date 
+from datetime import timedelta
+from django.utils import timezone
 
 def get_expiry_date():
   return timezone.now() + timedelta(days=60)

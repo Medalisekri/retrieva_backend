@@ -30,7 +30,7 @@ EMAILJS_PUBLIC_KEY = os.getenv('EMAILJS_PUBLIC_KEY')
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['10.0.2.2' , '127.0.0.1' , '192.168.1.103']
 

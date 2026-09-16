@@ -40,10 +40,10 @@ def send_match_notifications(new_item, matches):
         # Person who owns the NEW item (just posted it)
         new_owner_uid = new_item.user.username
 
-        # 1️⃣ Tell the EXISTING item's owner: "Someone posted something like yours!"
+        #  Tell the EXISTING item's owner: "Someone posted something like yours!"
         send_push(
             external_ids=[existing_owner_uid],
-            title="Possible match found! 🔔",
+            title="Possible match found!",
             body=f"A new item '{new_item.name}' looks like your '{match.name}'.",
             data={
              "type": "match_found",
@@ -51,10 +51,10 @@ def send_match_notifications(new_item, matches):
              },
         )
 
-        # 2️⃣ Tell the NEW item's owner: "Your item matches something!"
+        #  Tell the NEW item's owner: "Your item matches something!"
         send_push(
             external_ids=[new_owner_uid],
-            title="We found a possible match! 🔔",
+            title="We found a possible match!",
             body=f"Your '{new_item.name}' may match the existing '{match.name}'.",
             data={ "type": "match_found","item_id": match.id},
         )

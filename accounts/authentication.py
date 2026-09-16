@@ -5,8 +5,12 @@ from django.contrib.auth.models import User
 
 class FirebaseAuthentication(BaseAuthentication):
  def authenticate(self, request):
+    auth_header = request.headers.get('Authorization', '')       
+    if not auth_header.startswith('Bearer '):
+            return None 
+            
+    token = auth_header[7:] # Extract everything after "Bearer "
         
-    token = request.headers.get('Authorization', '').split('Bearer ')[-1]
     if not token:
         return None
     try:

@@ -8,11 +8,22 @@ from django.utils import timezone
 from .serializer import ItemDetailSerializer
 from .matching import find_matches 
 from .notifications import send_match_notifications
+from rest_framework.pagination import PageNumberPagination
+from datetime import timedelta
+from django.db.models import Q
+class ItemPagination(PageNumberPagination):
+    page_size = 20                         
+    page_size_query_param = 'page_size'     
+    max_page_size = 50                     
 @api_view(['GET' , 'POST'])
 def item_list(request):
     if request.method == 'GET':
-        items = Item.objects.all()
-        items = Item.objects.filter(expires_at__gte=timezone.now().date()) | Item.objects.filter(expires_at__isnull=True)
+        today = timezone.now().date()
+        items = Item.objects.filter(status='active')
+        items = items.filter(
+            Q(expires_at__gte=today) | Q(expires_at__isnull=True)
+        )
+
         type = request.GET.get('type')
         category = request.GET.get('category')
         status = request.GET.get('status')
@@ -22,15 +33,29 @@ def item_list(request):
             items = items.filter(category = category)
         if status:
             items = items.filter(status = status)
-        serializer = ItemListSerializer(items , many = True ,context={'request': request})
-        return Response(serializer.data)
+        paginator = ItemPagination()
+        page = paginator.paginate_queryset(items, request)
+        serializer = ItemListSerializer(page, many=True , context = {'request':request})
+        return paginator.get_paginated_response(serializer.data)
+    
     elif request.method =='POST':
+        if not request.user.is_authenticated:
+            return Response(status=401)
+        since = timezone.now() - timedelta(hours=24)
+        recent_count = Item.objects.filter(
+            user=request.user,
+            created_at__gte=since,
+        ).count()
+
+        if recent_count >= 5:
+            return Response(
+                {'error': 'Limit reached. You can post up to 5 items per day.'},
+                status=429,  
+            )
         serializer = ItemListSerializer(data = request.data)
         if serializer.is_valid():
-    # 1. Save the item to the database (this returns the Item instance)
             item = serializer.save(user=request.user)  
 
-    # 2. Pass that 'item' instance into the matching function
             matches = find_matches(item)  
     
         if matches:
