@@ -64,16 +64,16 @@ def contact_us(request):
             timeout=10,
         )
     except requests.RequestException as e:
-        print(f"[EMAILJS] Request failed: {e}")
+       
         return Response(
             {'error': 'Failed to connect to email service.'},
             status=502,
         )
     if response.status_code == 200:
-        print(f"[EMAILJS] Email sent from {email} ({request.user.username})")
+       
         return Response({'message': 'Email sent successfully.'})
 
-    print(f"[EMAILJS] Failed: {response.status_code} {response.text}")
+   
     return Response(
         {'error': 'Email service rejected the request.'},
         status=502,
