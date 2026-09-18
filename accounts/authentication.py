@@ -15,9 +15,9 @@ class FirebaseAuthentication(BaseAuthentication):
         return None
     try:
         decoded_token = auth.verify_id_token(token)
-        print('DECODED UID:', decoded_token.get('uid'))
+       
     except Exception as e:
-        print('FIREBASE VERIFY ERROR:', e)
+       
         raise AuthenticationFailed('Invalid Firebase token')
 
     uid = decoded_token['uid']
