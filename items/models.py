@@ -11,7 +11,7 @@ class Item(models.Model):
     category = models.CharField(max_length=50)
     name = models.CharField(max_length=50 , blank=True)
     description = models.TextField(blank=True)
-    img_url = models.CharField(max_length=100 , blank= True)
+    img_url = models.CharField(max_length=500 , blank= True)
     status = models.CharField(max_length=10)
     lat = models.DecimalField(decimal_places=7 , max_digits=10)
     long = models.DecimalField(decimal_places=7 , max_digits=10)
