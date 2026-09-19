@@ -61,10 +61,10 @@ def item_list(request):
             if matches:
                 send_match_notifications(item, matches)
 
-        return Response(
-            ItemListSerializer(item, context={'request': request}).data,
-            status=201,
-        )
+            return Response(
+                ItemListSerializer(item, context={'request': request}).data,
+                status=201,
+            )
 
     return Response(serializer.errors, status=400)  
          
