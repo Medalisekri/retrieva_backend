@@ -58,14 +58,15 @@ def item_list(request):
 
             matches = find_matches(item)  
     
-        if matches:
-            send_match_notifications(item, matches)
+            if matches:
+                send_match_notifications(item, matches)
 
         return Response(
-        {'message': 'Item created successfully', 'id': item.id},
-        status=201,
+            ItemListSerializer(item, context={'request': request}).data,
+            status=201,
         )
-            
+
+    return Response(serializer.errors, status=400)  
          
 
 @api_view(['GET' , 'PATCH' , 'DELETE'])
