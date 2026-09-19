@@ -61,7 +61,10 @@ def item_list(request):
         if matches:
             send_match_notifications(item, matches)
 
-        return Response(ItemListSerializer(item).data, status=201)
+        return Response(
+        {'message': 'Item created successfully', 'id': item.id},
+        status=201,
+        )
             
          
 
