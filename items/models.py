@@ -5,7 +5,7 @@ from datetime import timedelta
 from django.utils import timezone
 
 def get_expiry_date():
-  return timezone.now() + timedelta(days=60)
+  return timezone.now().date() + timedelta(days=60)
 class Item(models.Model):
     type = models.CharField(max_length=10)
     category = models.CharField(max_length=50)
