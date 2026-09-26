@@ -23,16 +23,6 @@ def item_list(request):
         items = items.filter(
             Q(expires_at__gte=today) | Q(expires_at__isnull=True)
         )
-
-        type = request.GET.get('type')
-        category = request.GET.get('category')
-        status = request.GET.get('status')
-        if type:
-            items = items.filter(type = type)
-        if category: 
-            items = items.filter(category = category)
-        if status:
-            items = items.filter(status = status)
         paginator = ItemPagination()
         page = paginator.paginate_queryset(items, request)
         serializer = ItemListSerializer(page, many=True , context = {'request':request})
@@ -68,7 +58,6 @@ def item_list(request):
 
     return Response(serializer.errors, status=400)  
          
-
 @api_view(['GET' , 'PATCH' , 'DELETE'])
 def item_detail(request , pk):
     try:
@@ -92,26 +81,10 @@ def item_detail(request , pk):
     elif request.method == 'DELETE':
         item.delete()
         return Response(status = 201)
-@api_view(['PATCH'])
-def report_item(request , pk):
-    try:
-        item = Item.objects.get(pk=pk)
-    except Item.DoesNotExist:
-        return Response(status = 404)
-    item.is_reported = True
-    item.save()
-    return Response({"message" : "Item reported"}) 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def my_items(request):
     items = Item.objects.filter(user=request.user).order_by('-created_at')
-    active = request.GET.get('status')
-    resolved = request.GET.get('status')
- 
-    if active:
-           items = items.filter(status = 'active')
-    if resolved: 
-           items = items.filter(status = 'resolved')
     serializer = ItemListSerializer(items, many=True )
     return Response(serializer.data)
   

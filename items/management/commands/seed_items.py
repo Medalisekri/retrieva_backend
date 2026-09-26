@@ -115,5 +115,5 @@ class Command(BaseCommand):
             Item.objects.create(user=user, **data)
 
         self.stdout.write(
-            self.style.SUCCESS(f'✅ Seeded {len(items)} sample items!')
+            self.style.SUCCESS(f' Seeded {len(items)} sample items!')
         )
