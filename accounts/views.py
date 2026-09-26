@@ -6,8 +6,6 @@ from django.conf import settings
 from rest_framework.permissions import IsAuthenticated
 @api_view(['GET', 'PATCH'])
 def profile(request):
-    print("USER:", request.user)
-    print("AUTH:", request.auth)
     profile = request.user.profile
     if request.method == 'GET':
         return Response(ProfileSerializer(profile).data)
@@ -23,15 +21,6 @@ def contact_us(request):
     name = request.data.get('name', '').strip()
     email = request.data.get('email', '').strip()
     message = request.data.get('message', '').strip()
-
-    # Basic validation
-    if not name or not email or not message:
-        return Response(
-            {'error': 'Name, email, and message are required.'},
-            status=400,
-        )
-
-    # Verify EmailJS config exists
     if not all([
         settings.EMAILJS_SERVICE_ID,
         settings.EMAILJS_TEMPLATE_ID,
@@ -43,7 +32,6 @@ def contact_us(request):
             status=500,
         )
 
-    # Send via EmailJS REST API
     payload = {
         'service_id': settings.EMAILJS_SERVICE_ID,
         'template_id': settings.EMAILJS_TEMPLATE_ID,
