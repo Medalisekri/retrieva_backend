@@ -109,6 +109,7 @@ else:
             'PASSWORD': '0',
             'HOST': 'localhost',
             'PORT': '5001',
+            'CONN_HEALTH_CHECKS': True, 
         }
     }
 
